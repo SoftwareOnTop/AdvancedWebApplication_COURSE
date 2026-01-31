@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forum</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+
+    <nav>
+        <div class="nav-wrapper">
+            <a href="#" class="brand-logo">Forum</a>
+            <ul class="right">
+                <li>
+                    <form id="loginForm" class="row">
+                        <div class="input-field col">
+                            <input type="email" id="email" class="navbar-input">
+                            <label for="email">Email</label>
+                        </div>
+                        <div class="input-field col">
+                            <input type="password" id="password" class="navbar-input">
+                            <label for="password">Password</label>
+                        </div>
+                        <div class="col">
+                            <button type="submit" class="btn waves-effect waves-light">Login</button>
+                        </div>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div id="topicForm"></div>
+        <div id="topics"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script>
+        let token = localStorage.getItem('token');
+        let currentUser = null;
+
+        function parseJwt(token) {
+            try {
+                return JSON.parse(atob(token.split('.')[1]));
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function init() {
+            if (token) {
+                currentUser = parseJwt(token);
+                document.getElementById('loginForm').innerHTML = `
+                    <div class="col">
+                        <span style="color: white; margin-right: 20px;">Welcome, ${currentUser.username}</span>
+                        <button id="logoutBtn" class="btn waves-effect waves-light">Logout</button>
+                    </div>
+                `;
+                document.getElementById('logoutBtn').addEventListener('click', logout);
+                
+                showTopicForm();
+            } else {
+                const navbar = document.querySelector('.nav-wrapper ul');
+                const registerLi = document.createElement('li');
+                registerLi.innerHTML = '<a href="register.html" class="btn waves-effect waves-light">Register</a>';
+                navbar.appendChild(registerLi);
+            }
+
+            loadTopics();
+        }
+
+        // Show topic creation form
+        function showTopicForm() {
+            const topicForm = document.getElementById('topicForm');
+            topicForm.innerHTML = `
+                <h4>Create New Topic</h4>
+                <div class="input-field">
+                    <input type="text" id="topicTitle" required>
+                    <label for="topicTitle">Title</label>
+                </div>
+                <div class="input-field">
+                    <textarea id="topicText" class="materialize-textarea" required></textarea>
+                    <label for="topicText">Content</label>
+                </div>
+                <button id="postTopic" class="btn waves-effect waves-light">Post Topic</button>
+            `;
+
+
+            document.getElementById('postTopic').addEventListener('click', createTopic);
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('/api/user/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    token = data.token;
+                    localStorage.setItem('token', token);
+                    location.reload();
+                } else {
+                    alert(data.message || 'Login failed');
+                }
+            } catch (error) {
+                alert('An error occurred during login');
+            }
+        });
+
+        function logout() {
+            localStorage.removeItem('token');
+            location.reload();
+        }
+
+        async function createTopic() {
+            const title = document.getElementById('topicTitle').value;
+            const content = document.getElementById('topicText').value;
+
+            if (!title || !content) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/topic', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ title, content })
+                });
+
+                if (response.ok) {
+                    document.getElementById('topicTitle').value = '';
+                    document.getElementById('topicText').value = '';
+                    M.updateTextFields();
+                    loadTopics();
+                } else {
+                    alert('Failed to create topic');
+                }
+            } catch (error) {
+                alert('An error occurred while creating topic');
+            }
+        }
+
+        async function loadTopics() {
+            try {
+                const response = await fetch('/api/topics');
+                const topics = await response.json();
+
+                const topicsDiv = document.getElementById('topics');
+                topicsDiv.innerHTML = '<h4>Topics</h4>';
+
+                topics.forEach(topic => {
+                    const topicCard = document.createElement('div');
+                    topicCard.className = 'card z-depth-2 hoverable grey lighten-2';
+                    
+                    const cardContent = document.createElement('div');
+                    cardContent.className = 'card-content';
+                    
+                    const title = document.createElement('span');
+                    title.className = 'card-title';
+                    title.textContent = topic.title;
+                    
+                    const content = document.createElement('p');
+                    content.textContent = topic.content;
+                    
+                    const meta = document.createElement('p');
+                    meta.className = 'grey-text text-darken-2';
+                    const date = new Date(topic.createdAt).toLocaleString();
+                    meta.textContent = `Posted by ${topic.username} on ${date}`;
+                    
+                    cardContent.appendChild(title);
+                    cardContent.appendChild(content);
+                    cardContent.appendChild(meta);
+                    
+                    topicCard.appendChild(cardContent);
+                    
+                    if (currentUser && currentUser.isAdmin) {
+                        const cardAction = document.createElement('div');
+                        cardAction.className = 'card-action';
+                        
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.id = 'deleteTopic';
+                        deleteBtn.className = 'btn waves-effect waves-light';
+                        deleteBtn.textContent = 'Delete';
+                        deleteBtn.onclick = () => deleteTopic(topic._id);
+                        
+                        cardAction.appendChild(deleteBtn);
+                        topicCard.appendChild(cardAction);
+                    }
+                    
+                    topicsDiv.appendChild(topicCard);
+                });
+            } catch (error) {
+                alert('Error loading topics');
+            }
+        }
+
+        async function deleteTopic(id) {
+            if (!confirm('Are you sure you want to delete this topic?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/topic/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    loadTopics();
+                } else {
+                    alert(data.message || 'Failed to delete topic');
+                }
+            } catch (error) {
+                alert('An error occurred while deleting topic');
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
+                }, 2000);
+            });
+        }
+       
+        document.getElementById('logout').addEventListener('click', () => {
+            localStorage.removeItem('token');
+            window.location.href = '/login.html';
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h2>Register</h2>
+        <form id="registerForm">
+            <div class="input-field">
+                <input type="email" id="email" required>
+                <label for="email">Email</label>
+            </div>
+            <div class="input-field">
+                <input type="text" id="username" required>
+                <label for="username">Username</label>
+            </div>
+            <div class="input-field">
+                <input type="password" id="password" required>
+                <label for="password">Password</label>
+            </div>
+            <p>
+                <label>
+                    <input type="checkbox" id="isAdmin" class="filled-in">
+                    <span>Admin User</span>
+                </label>
+            </p>
+            <button type="submit" class="btn waves-effect waves-light">Register</button>
+        </form>
+        <div class="error" id="errorMessage"></div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const isAdmin = document.getElementById('isAdmin').checked;
+            const errorMessage = document.getElementById('errorMessage');
+            
+            try {
+                const response = await fetch('/api/user/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, username, password, isAdmin })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    window.location.href = 'index.html';
+                } else if (response.status === 403) {
+                    errorMessage.textContent = 'Email already in use';
+                } else if (response.status === 400) {
+                    errorMessage.textContent = data.errors ? data.errors.map(e => e.msg).join(', ') : 'Invalid input';
+                } else {
+                    errorMessage.textContent = 'Registration failed';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                errorMessage.textContent = 'An error occurred';
+            }
+        });
+    </script>
+</body>
+</html>

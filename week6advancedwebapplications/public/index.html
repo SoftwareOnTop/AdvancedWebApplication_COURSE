@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offers</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+</head>
+<body>
+
+    <div class="container">
+        <h1 class="center-align">Offers</h1>
+
+        <div class="card-panel">
+            <form id="offerForm" enctype="multipart/form-data">
+                <div class="input-field">
+                    <label for="title">Title:</label>
+                    <input id="title" type="text" name="title" required>
+                </div>
+
+                
+
+                <div class="input-field">
+                    <label for="description">Description:</label>
+                    <textarea id="description" class="materialize-textarea" name="description" required></textarea>
+                </div>
+
+                <div class="file-field input-field">
+                    <div class="btn">
+                        <span>Upload image:</span>
+                        <input id="image" type="file" name="image" accept="image/*">
+                    </div>
+                    <div class="file-path-wrapper">
+                        <input class="file-path validate" type="text" placeholder="Upload an image">
+                    </div>
+                </div>
+
+                <div class="input-field">
+                    <label for="price">Price (€):</label>
+                    <input id="price" type="number" name="price" step="0.01" required>
+                </div>
+
+                <button class="btn waves-effect waves-light" type="submit">Submit</button>
+            </form>
+        </div>
+
+        <div id="offersContainer" class="row"></div>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
