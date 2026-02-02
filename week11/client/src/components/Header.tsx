@@ -1,36 +1,26 @@
-import React from 'react';
-import { AppBar, Toolbar, Button, Typography, Box } from '@mui/material';
+import AppBar from '@mui/material/AppBar';
+import Box from '@mui/material/Box';
+import Toolbar from '@mui/material/Toolbar';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
 import { Link } from 'react-router-dom';
 
-const Header: React.FC = () => {
+export default function Header() {
   return (
-    <AppBar position="static" sx={{ backgroundColor: '#1976d2' }}>
-      <Toolbar>
-        {}
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-          MyApp
-        </Typography>
-
-        {}
-        <Box>
-          <Button 
-            color="inherit" 
-            component={Link} 
-            to="/"
-          >
-            home
+    <Box sx={{ flexGrow: 1, marginBottom: 4 }}>
+      <AppBar position="static">
+        <Toolbar>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            Joke App
+          </Typography>
+          <Button color="inherit" component={Link} to="/">
+            Home
           </Button>
-          <Button 
-            color="inherit" 
-            component={Link} 
-            to="/saved"
-          >
-            saved
+          <Button color="inherit" component={Link} to="/saved">
+            Saved
           </Button>
-        </Box>
-      </Toolbar>
-    </AppBar>
+        </Toolbar>
+      </AppBar>
+    </Box>
   );
-};
-
-export default Header;
+}
